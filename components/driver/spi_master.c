@@ -1028,7 +1028,8 @@ static void SPI_MASTER_ISR_ATTR spi_intr(void *arg)
         //cur_cs is changed to NO_CS here
         spi_post_trans(host);
         //Return transaction descriptor.
-        xQueueSendFromISR(atomic_load(&host->device[cs])->ret_queue, &host->cur_trans_buf, &do_yield);
+        if (host->cur_trans_buf.trans->blocking)
+            xQueueSendFromISR(atomic_load(&host->device[cs])->ret_queue, &host->cur_trans_buf, &do_yield);
 #ifdef CONFIG_PM_ENABLE
         //Release APB frequency lock
         esp_pm_lock_release(host->pm_lock);
@@ -1192,6 +1193,7 @@ clean_up:
 
 esp_err_t SPI_MASTER_ATTR spi_device_queue_trans(spi_device_handle_t handle, spi_transaction_t *trans_desc,  TickType_t ticks_to_wait)
 {
+    while (handle->host->hw->cmd.usr);
     esp_err_t ret = check_trans_valid(handle, trans_desc);
     if (ret != ESP_OK) return ret;
 
@@ -1251,6 +1253,7 @@ esp_err_t SPI_MASTER_ATTR spi_device_transmit(spi_device_handle_t handle, spi_tr
 {
     esp_err_t ret;
     spi_transaction_t *ret_trans;
+
     //ToDo: check if any spi transfers in flight
     ret = spi_device_queue_trans(handle, trans_desc, portMAX_DELAY);
     if (ret != ESP_OK) return ret;

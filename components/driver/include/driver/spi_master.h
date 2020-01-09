@@ -138,6 +138,7 @@ struct spi_transaction_t {
         void *rx_buffer;            ///< Pointer to receive buffer, or NULL for no MISO phase. Written by 4 bytes-unit if DMA is used.
         uint8_t rx_data[4];         ///< If SPI_USE_RXDATA is set, data is received directly to this variable
     };
+    bool blocking;
 } ;        //the rx data should start from a 32-bit aligned address to get around dma issue.
 
 /**
