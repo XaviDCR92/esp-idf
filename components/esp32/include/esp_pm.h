@@ -172,7 +172,9 @@ esp_err_t esp_pm_lock_delete(esp_pm_lock_handle_t handle);
  */
 esp_err_t esp_pm_dump_locks(FILE* stream);
 
+typedef void (*pre_light_sleep_cb_t)(void);
 
+void esp_pm_set_pre_light_sleep_cb(pre_light_sleep_cb_t cb);
 
 #ifdef __cplusplus
 }

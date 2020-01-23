@@ -458,7 +458,7 @@ void IRAM_ATTR esp_pm_impl_isr_hook()
     int core_id = xPortGetCoreID();
     ESP_PM_TRACE_ENTER(ISR_HOOK, core_id);
     /* Prevent higher level interrupts (than the one this function was called from)
-     * from happening in this section, since they will also call into esp_pm_impl_isr_hook. 
+     * from happening in this section, since they will also call into esp_pm_impl_isr_hook.
      */
     uint32_t state = portENTER_CRITICAL_NESTED();
 #if portNUM_PROCESSORS == 2
@@ -519,6 +519,13 @@ static inline void IRAM_ATTR other_core_should_skip_light_sleep(int core_id)
 #endif
 }
 
+static pre_light_sleep_cb_t pre_light_sleep_cb;
+
+void esp_pm_set_pre_light_sleep_cb(pre_light_sleep_cb_t cb)
+{
+    pre_light_sleep_cb = cb;
+}
+
 void IRAM_ATTR vApplicationSleep( TickType_t xExpectedIdleTime )
 {
     portENTER_CRITICAL(&s_switch_lock);
@@ -538,6 +545,8 @@ void IRAM_ATTR vApplicationSleep( TickType_t xExpectedIdleTime )
 #endif
             /* Enter sleep */
             ESP_PM_TRACE_ENTER(SLEEP, core_id);
+            if (pre_light_sleep_cb)
+                pre_light_sleep_cb();
             int64_t sleep_start = esp_timer_get_time();
             esp_light_sleep_start();
             int64_t slept_us = esp_timer_get_time() - sleep_start;

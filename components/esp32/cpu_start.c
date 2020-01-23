@@ -405,6 +405,9 @@ void start_cpu0_default(void)
     esp_pm_config_esp32_t cfg = {
         .max_freq_mhz = CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ,
         .min_freq_mhz = xtal_freq,
+#ifdef CONFIG_PM_AUTO_LIGHT_SLEEP_ENABLE
+        .light_sleep_enable = true
+#endif // PM_AUTO_LIGHT_SLEEP_ENABLE
     };
     esp_pm_configure(&cfg);
 #endif //CONFIG_PM_DFS_INIT_AUTO

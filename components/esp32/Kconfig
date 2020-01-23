@@ -1440,6 +1440,17 @@ menu "Power Management"
             RTOS ticks and timers used for timekeeping.
             Enable this option if application uses power management APIs.
 
+    config PM_AUTO_LIGHT_SLEEP_ENABLE
+        bool "Enable automatic light sleep at startup (AFFECTS DEBUGGING)"
+        depends on PM_ENABLE && FREERTOS_USE_TICKLESS_IDLE
+        default n
+        help
+            If enabled, startup code configures dynamic light sleep mode activation.
+            This allows the CPU to enter light sleep mode if no locks are present.
+            Take into account light sleep causes issues with JTAG emulators, so it
+            is not advisable to activate this option when doing source-level
+            debugging.
+
     config PM_DFS_INIT_AUTO
         bool "Enable dynamic frequency scaling (DFS) at startup"
         depends on PM_ENABLE
