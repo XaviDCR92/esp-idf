@@ -619,6 +619,7 @@ deploy_docs:
   image: $CI_DOCKER_REGISTRY/esp32-ci-env$BOT_DOCKER_IMAGE_TAG
   tags:
     - deploy
+    - shiny
   only:
     refs:
       - master
@@ -957,7 +958,7 @@ nvs_compatible_test:
 
 example_test_001:
   <<: *example_test_template
-  parallel: 2
+  parallel: 3
   tags:
     - ESP32
     - Example_WIFI
