@@ -934,11 +934,6 @@ static void btc_ble_mesh_proxy_client_filter_status_recv_cb(u8_t conn_handle,
 }
 #endif /* CONFIG_BLE_MESH_GATT_PROXY_CLIENT */
 
-int btc_ble_mesh_deinit(esp_ble_mesh_deinit_param_t *param)
-{
-    return bt_mesh_deinit((struct bt_mesh_deinit_param *)param);
-}
-
 int btc_ble_mesh_client_model_init(esp_ble_mesh_model_t *model)
 {
     __ASSERT(model && model->op, "%s, Invalid parameter", __func__);
@@ -1884,6 +1879,10 @@ void btc_ble_mesh_prov_call_handler(btc_msg_t *msg)
         break;
     }
 #endif /* CONFIG_BLE_MESH_GATT_PROXY_CLIENT */
+    case BTC_BLE_MESH_ACT_DEINIT_MESH:
+        act = ESP_BLE_MESH_DEINIT_MESH_COMP_EVT;
+        param.deinit_mesh_comp.err_code = bt_mesh_deinit((struct bt_mesh_deinit_param *)&arg->mesh_deinit.param);
+        break;
     default:
         BT_WARN("%s, Invalid msg->act %d", __func__, msg->act);
         return;
@@ -1944,8 +1943,8 @@ void btc_ble_mesh_model_call_handler(btc_msg_t *msg)
         break;
     }
     case BTC_BLE_MESH_ACT_SERVER_MODEL_SEND: {
-        /* arg->model_send.length contains opcode & message, 8 is used for TransMIC */
-        struct net_buf_simple *buf = bt_mesh_alloc_buf(arg->model_send.length + 8);
+        /* arg->model_send.length contains opcode & message, 4 is used for TransMIC */
+        struct net_buf_simple *buf = bt_mesh_alloc_buf(arg->model_send.length + 4);
         if (!buf) {
             BT_ERR("%s, Failed to allocate memory", __func__);
             break;
@@ -1962,8 +1961,8 @@ void btc_ble_mesh_model_call_handler(btc_msg_t *msg)
     }
     case BTC_BLE_MESH_ACT_CLIENT_MODEL_SEND: {
         bt_mesh_role_param_t common = {0};
-        /* arg->model_send.length contains opcode & message, 8 is used for TransMIC */
-        struct net_buf_simple *buf = bt_mesh_alloc_buf(arg->model_send.length + 8);
+        /* arg->model_send.length contains opcode & message, 4 is used for TransMIC */
+        struct net_buf_simple *buf = bt_mesh_alloc_buf(arg->model_send.length + 4);
         if (!buf) {
             BT_ERR("%s, Failed to allocate memory", __func__);
             break;

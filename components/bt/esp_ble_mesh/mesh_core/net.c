@@ -712,9 +712,12 @@ do_update:
 
     k_delayed_work_submit(&bt_mesh.ivu_timer, BLE_MESH_IVU_TIMEOUT);
 
-    for (i = 0; i < ARRAY_SIZE(bt_mesh.sub); i++) {
-        if (bt_mesh.sub[i].net_idx != BLE_MESH_KEY_UNUSED) {
-            bt_mesh_net_beacon_update(&bt_mesh.sub[i]);
+    size_t subnet_size = bt_mesh_rx_netkey_size();
+
+    for (i = 0; i < subnet_size; i++) {
+        struct bt_mesh_subnet *sub = bt_mesh_rx_netkey_get(i);
+        if (sub && sub->net_idx != BLE_MESH_KEY_UNUSED) {
+            bt_mesh_net_beacon_update(sub);
         }
     }
 
@@ -1394,6 +1397,24 @@ static bool ready_to_recv(void)
     return false;
 }
 
+static bool ignore_net_msg(u16_t src, u16_t dst)
+{
+    if (IS_ENABLED(CONFIG_BLE_MESH_PROVISIONER) &&
+        bt_mesh_is_provisioner_en() &&
+        BLE_MESH_ADDR_IS_UNICAST(dst) &&
+        bt_mesh_elem_find(dst)) {
+        /* If the destination address of the message is the element
+         * address of Provisioner, but Provisioner fails to find the
+         * node in its provisioning database, then this message will
+         * be ignored.
+         */
+        if (!bt_mesh_provisioner_get_node_with_addr(src)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void bt_mesh_net_recv(struct net_buf_simple *data, s8_t rssi,
                       enum bt_mesh_net_if net_if)
 {
@@ -1408,6 +1429,10 @@ void bt_mesh_net_recv(struct net_buf_simple *data, s8_t rssi,
     }
 
     if (bt_mesh_net_decode(data, net_if, &rx, &buf)) {
+        return;
+    }
+
+    if (ignore_net_msg(rx.ctx.addr, rx.ctx.recv_dst)) {
         return;
     }
 
