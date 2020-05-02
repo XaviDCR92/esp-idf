@@ -664,7 +664,7 @@
  * LWIP_ND6_RDNSS_MAX_DNS_SERVERS: Allow IPv6 DNS servers to be retrieved from
  * NDP, up to the maximum number of allowed DNS servers (minus fallback slot)
  */
-#define LWIP_ND6_RDNSS_MAX_DNS_SERVERS  DNS_MAX_SERVERS
+#define LWIP_ND6_RDNSS_MAX_DNS_SERVERS  0
 
 
 /*
@@ -777,6 +777,7 @@
 
 #define ESP_LWIP                        1
 #define ESP_LWIP_ARP                    1
+#define ESP_IPV6                        1
 #define ESP_PER_SOC_TCP_WND             0
 #define ESP_THREAD_SAFE                 1
 #define ESP_THREAD_SAFE_DEBUG           LWIP_DBG_OFF
