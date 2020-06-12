@@ -1028,7 +1028,7 @@ static void SPI_MASTER_ISR_ATTR spi_intr(void *arg)
         //cur_cs is changed to NO_CS here
         spi_post_trans(host);
         //Return transaction descriptor.
-        if (host->cur_trans_buf.trans->blocking)
+        if (!host->cur_trans_buf.trans->non_blocking)
             xQueueSendFromISR(atomic_load(&host->device[cs])->ret_queue, &host->cur_trans_buf, &do_yield);
 #ifdef CONFIG_PM_ENABLE
         //Release APB frequency lock
@@ -1389,5 +1389,3 @@ esp_err_t SPI_MASTER_ISR_ATTR spi_device_polling_transmit(spi_device_handle_t ha
 
     return ESP_OK;
 }
-
-
