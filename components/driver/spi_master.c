@@ -187,6 +187,8 @@ typedef struct {
     int dma_chan;
     int max_transfer_sz;
     spi_bus_config_t bus_cfg;
+    SemaphoreHandle_t semphr;
+    StaticSemaphore_t st_semphr;
 #ifdef CONFIG_PM_ENABLE
     esp_pm_lock_handle_t pm_lock;
 #endif
@@ -256,6 +258,8 @@ esp_err_t spi_bus_initialize(spi_host_device_t host, const spi_bus_config_t *bus
     }
     memset(spihost[host], 0, sizeof(spi_host_t));
     memcpy( &spihost[host]->bus_cfg, bus_config, sizeof(spi_bus_config_t));
+    spihost[host]->semphr = xSemaphoreCreateBinaryStatic(&spihost[host]->st_semphr);
+    xSemaphoreGive(spihost[host]->semphr);
 #ifdef CONFIG_PM_ENABLE
     err = esp_pm_lock_create(ESP_PM_APB_FREQ_MAX, 0, "spi_master",
             &spihost[host]->pm_lock);
@@ -1004,6 +1008,11 @@ static void SPI_MASTER_ISR_ATTR spi_post_trans(spi_host_t *host)
     if (dev->cfg.post_cb) dev->cfg.post_cb(cur_trans);
 
     host->cur_cs = NO_CS;
+
+    BaseType_t do_yield;
+    xSemaphoreGiveFromISR(host->semphr, &do_yield);
+
+    if (do_yield == pdTRUE) portYIELD_FROM_ISR();
 }
 
 // This is run in interrupt context.
@@ -1193,11 +1202,11 @@ clean_up:
 
 esp_err_t SPI_MASTER_ATTR spi_device_queue_trans(spi_device_handle_t handle, spi_transaction_t *trans_desc,  TickType_t ticks_to_wait)
 {
-    while (handle->host->hw->cmd.usr);
+    spi_host_t *host = handle->host;
+    xSemaphoreTake(host->semphr, portMAX_DELAY);
+
     esp_err_t ret = check_trans_valid(handle, trans_desc);
     if (ret != ESP_OK) return ret;
-
-    spi_host_t *host = handle->host;
 
     SPI_CHECK( !device_is_polling(handle), "Cannot queue new transaction while previous polling transaction is not terminated.", ESP_ERR_INVALID_STATE );
 
